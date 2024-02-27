@@ -1,0 +1,41 @@
+name: 'Setup GNATdoc'
+description: 'Install and use GNATdoc'
+inputs:
+  install-prefix:
+    description: 'Directory to install GNATdoc'
+    default: '.gnatdoc'
+runs:
+  using: "composite"
+  steps:
+    - name: Setup cache for GNATdoc
+      id: cache-gnatdoc
+      uses: actions/cache@v4
+      with:
+        path: ${{ inputs.install-prefix }}
+        key: ${{ runner.os }}-gnatdoc
+
+    - name: Install Alire
+      if: steps.cache-gnatdoc.outputs.cache-hit != 'true'
+      uses: alire-project/setup-alire@v2
+      with:
+        version: 2.0.0-beta1
+
+    - name: Build GNATdoc
+      if: steps.cache-gnatdoc.outputs.cache-hit != 'true'
+      shell: bash
+      env:
+        INPUT_INSTALL_PREFIX: ${{ inputs.install-prefix }}
+      run: |
+        alr index --add git+https://github.com/reznikmm/als-alire-index.git --name als
+        mkdir -p $INPUT_INSTALL_PREFIX
+        OUTPUT=`cd $INPUT_INSTALL_PREFIX && pwd`
+        cd `mktemp -d -t`
+        LIBRARY_TYPE=static STANDALONE=no alr get --build gnatdoc
+        cp -v -r gnatdoc_*/{bin,share} $OUTPUT/
+        alr index --del=als
+
+    - name: Set GitHub Path
+      run: echo "$INPUT_INSTALL_PREFIX/bin" >> $GITHUB_PATH
+      shell: bash
+      env:
+        INPUT_INSTALL_PREFIX: ${{ inputs.install-prefix }}
