@@ -17,8 +17,6 @@ runs:
     - name: Install Alire
       if: steps.cache-gnatdoc.outputs.cache-hit != 'true'
       uses: alire-project/setup-alire@v2
-      with:
-        version: 2.0.0-beta1
 
     - name: Build GNATdoc
       if: steps.cache-gnatdoc.outputs.cache-hit != 'true'
